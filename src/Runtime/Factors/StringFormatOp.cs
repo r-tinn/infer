@@ -490,7 +490,7 @@ namespace Microsoft.ML.Probabilistic.Factors
 
             if (forBackwardMessage)
             {
-                result.TransposeInPlace();
+                result = StringTransducer.Transpose(result);
             }
 
             return result;

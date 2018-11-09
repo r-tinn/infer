@@ -53,9 +53,9 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             {
 
                 var state = this.States[stateIdWeight.Key];
-                for (int i = 0; i < state.TransitionCount; ++i)
+                foreach (var transition in state.Transitions)
                 {
-                    AddTransitionCharSegmentBounds(state.GetTransition(i), stateIdWeight.Value, segmentBounds);
+                    AddTransitionCharSegmentBounds(transition, stateIdWeight.Value, segmentBounds);
                 }
             }
 

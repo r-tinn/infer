@@ -27,8 +27,10 @@ namespace Microsoft.ML.Probabilistic.Tests
         [Trait("Category", "StringInference")]
         public void GetOutgoingTransitionsForDeterminization1()
         {
-            var wrapper = new StringAutomatonWrapper();
-            wrapper.Start.AddTransition(DiscreteChar.Uniform(), Weight.FromValue(2));
+            var builder = StringAutomaton.Builder.Zero();
+            builder.Start.AddTransition(DiscreteChar.Uniform(), Weight.FromValue(2));
+
+            var wrapper = new StringAutomatonWrapper(builder);
             
             var outgoingTransitions =
                 wrapper.GetOutgoingTransitionsForDeterminization(new Dictionary<int, Weight> { { 0, Weight.FromValue(3) } });
@@ -49,9 +51,11 @@ namespace Microsoft.ML.Probabilistic.Tests
         [Trait("Category", "StringInference")]
         public void GetOutgoingTransitionsForDeterminization2()
         {
-            var wrapper = new StringAutomatonWrapper();
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRange('a', 'z'), Weight.FromValue(2));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRanges('a', 'z', 'A', 'Z'), Weight.FromValue(3));
+            var builder = StringAutomaton.Builder.Zero();
+            builder.Start.AddTransition(DiscreteChar.UniformInRange('a', 'z'), Weight.FromValue(2));
+            builder.Start.AddTransition(DiscreteChar.UniformInRanges('a', 'z', 'A', 'Z'), Weight.FromValue(3));
+
+            var wrapper = new StringAutomatonWrapper(builder);
             
             var outgoingTransitions =
                 wrapper.GetOutgoingTransitionsForDeterminization(new Dictionary<int, Weight> { { 0, Weight.FromValue(5) } });
@@ -74,11 +78,14 @@ namespace Microsoft.ML.Probabilistic.Tests
         [Trait("Category", "StringInference")]
         public void GetOutgoingTransitionsForDeterminization3()
         {
-            var wrapper = new StringAutomatonWrapper();
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRange('a', 'b'), Weight.FromValue(2));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRanges('b', 'd'), Weight.FromValue(3));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRanges('e', 'g'), Weight.FromValue(4));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRanges(char.MinValue, 'a'), Weight.FromValue(5));
+            var builder = StringAutomaton.Builder.Zero();
+
+            builder.Start.AddTransition(DiscreteChar.UniformInRange('a', 'b'), Weight.FromValue(2));
+            builder.Start.AddTransition(DiscreteChar.UniformInRanges('b', 'd'), Weight.FromValue(3));
+            builder.Start.AddTransition(DiscreteChar.UniformInRanges('e', 'g'), Weight.FromValue(4));
+            builder.Start.AddTransition(DiscreteChar.UniformInRanges(char.MinValue, 'a'), Weight.FromValue(5));
+
+            var wrapper = new StringAutomatonWrapper(builder);
 
             var outgoingTransitions =
                 wrapper.GetOutgoingTransitionsForDeterminization(new Dictionary<int, Weight> { { 0, Weight.FromValue(6) } });
@@ -117,10 +124,12 @@ namespace Microsoft.ML.Probabilistic.Tests
         [Trait("Category", "StringInference")]
         public void GetOutgoingTransitionsForDeterminization4()
         {
-            var wrapper = new StringAutomatonWrapper();
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRange(char.MinValue, char.MaxValue), Weight.FromValue(2));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRange('a', char.MaxValue), Weight.FromValue(3));
-            wrapper.Start.AddTransition(DiscreteChar.UniformInRanges('z', char.MaxValue), Weight.FromValue(4));
+            var builder = StringAutomaton.Builder.Zero();
+            builder.Start.AddTransition(DiscreteChar.UniformInRange(char.MinValue, char.MaxValue), Weight.FromValue(2));
+            builder.Start.AddTransition(DiscreteChar.UniformInRange('a', char.MaxValue), Weight.FromValue(3));
+            builder.Start.AddTransition(DiscreteChar.UniformInRanges('z', char.MaxValue), Weight.FromValue(4));
+
+            var wrapper = new StringAutomatonWrapper(builder);
             
             var outgoingTransitions =
                 wrapper.GetOutgoingTransitionsForDeterminization(new Dictionary<int, Weight> { { 0, Weight.FromValue(5) } });
@@ -163,17 +172,18 @@ namespace Microsoft.ML.Probabilistic.Tests
         [Trait("Category", "StringInference")]
         public void GetOutgoingTrainsitionsForDeterminization5()
         {
-            var wrapper = new StringAutomatonWrapper();
+            var builder = StringAutomaton.Builder.Zero();
+            builder.Start.AddTransition('A', Weight.FromValue(2.49999999999995));
+            builder.Start.AddTransition('A', Weight.FromValue(4.49999999999959));
+            builder.Start.AddTransition('D', Weight.FromValue(2.49999999999996));
+            builder.Start.AddTransition('D', Weight.FromValue(4.49999999999966));
+            builder.Start.AddTransition('K', Weight.FromValue(5.00000001783332));
+            builder.Start.AddTransition('M', Weight.FromValue(2.49999999999996));
+            builder.Start.AddTransition('M', Weight.FromValue(2.49999999999991));
+            builder.Start.AddTransition('N', Weight.FromValue(2.49999999999996));
+            builder.Start.AddTransition('N', Weight.FromValue(2.49999999999994));
 
-            wrapper.Start.AddTransition('A', Weight.FromValue(2.49999999999995));
-            wrapper.Start.AddTransition('A', Weight.FromValue(4.49999999999959));
-            wrapper.Start.AddTransition('D', Weight.FromValue(2.49999999999996));
-            wrapper.Start.AddTransition('D', Weight.FromValue(4.49999999999966));
-            wrapper.Start.AddTransition('K', Weight.FromValue(5.00000001783332));
-            wrapper.Start.AddTransition('M', Weight.FromValue(2.49999999999996));
-            wrapper.Start.AddTransition('M', Weight.FromValue(2.49999999999991));
-            wrapper.Start.AddTransition('N', Weight.FromValue(2.49999999999996));
-            wrapper.Start.AddTransition('N', Weight.FromValue(2.49999999999994));
+            var wrapper = new StringAutomatonWrapper(builder);
 
             var outgoingTransitions = wrapper.GetOutgoingTransitionsForDeterminization(
                 new Dictionary<int, Weight> { { 0, Weight.FromValue(1) } }).ToArray();
@@ -314,12 +324,9 @@ namespace Microsoft.ML.Probabilistic.Tests
         /// </summary>
         private class StringAutomatonWrapper : StringAutomaton
         {
-            /// <summary>
-            /// Initializes a new instance of the <see cref="StringAutomatonWrapper"/> class.
-            /// </summary>
-            public StringAutomatonWrapper()
+            public StringAutomatonWrapper(StringAutomaton.Builder builder)
             {
-                this.SetToZero();
+                builder.ToAutomaton(this);
             }
 
             /// <summary>
