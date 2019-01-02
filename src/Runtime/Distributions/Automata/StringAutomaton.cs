@@ -48,7 +48,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             const double LogEps = -35; // Don't add transitions with log-weight less than this as they have been produced by numerical inaccuracies
             
             // Build a list of numbered non-zero probability character segment bounds (they are numbered here due to perf. reasons)
-            var segmentBounds = new List<Tuple<int, TransitionCharSegmentBound>>();
+            var segmentBounds = new List<ValueTuple<int, TransitionCharSegmentBound>>();
             foreach (KeyValuePair<int, Weight> stateIdWeight in sourceState)
             {
 
@@ -141,7 +141,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <param name="sourceStateResidualWeight">The logarithm of the residual weight of the source state of the transition.</param>
         /// <param name="bounds">The list for storing numbered segment bounds.</param>
         private static void AddTransitionCharSegmentBounds(
-            Transition transition, Weight sourceStateResidualWeight, List<Tuple<int, TransitionCharSegmentBound>> bounds)
+            Transition transition, Weight sourceStateResidualWeight, List<ValueTuple<int, TransitionCharSegmentBound>> bounds)
         {
             var distribution = transition.ElementDistribution.Value;
             var ranges = distribution.Ranges;
@@ -162,9 +162,9 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                     // Add endpoints for the common value
                     Weight segmentWeight = Weight.Product(commonValue, weightBase);
                     newSegmentBound = new TransitionCharSegmentBound(commonValueStart, transition.DestinationStateIndex, segmentWeight, true);
-                    bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
+                    bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
                     newSegmentBound = new TransitionCharSegmentBound(range.StartInclusive, transition.DestinationStateIndex, segmentWeight, false);
-                    bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
+                    bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
                 }
 
                 // Add segment endpoints
@@ -173,9 +173,9 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 {
                     Weight segmentWeight = Weight.Product(pieceValue, weightBase);
                     newSegmentBound = new TransitionCharSegmentBound(range.StartInclusive, transition.DestinationStateIndex, segmentWeight, true);
-                    bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
+                    bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
                     newSegmentBound = new TransitionCharSegmentBound(range.EndExclusive, transition.DestinationStateIndex, segmentWeight, false);
-                    bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count,newSegmentBound));    
+                    bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count,newSegmentBound));    
                 }
 
                 commonValueStart = range.EndExclusive;
@@ -186,9 +186,9 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 // Add endpoints for the last common value segment
                 Weight segmentWeight = Weight.Product(commonValue, weightBase);
                 newSegmentBound = new TransitionCharSegmentBound(commonValueStart, transition.DestinationStateIndex, segmentWeight, true);
-                bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
+                bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
                 newSegmentBound = new TransitionCharSegmentBound(char.MaxValue + 1, transition.DestinationStateIndex, segmentWeight, false);
-                bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
+                bounds.Add(new ValueTuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
             }
         }
 
