@@ -65,7 +65,13 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             // Produce an outgoing transition for each unique subset of overlapping segments
             var result = new List<(DiscreteChar, Weight, Determinization.WeightedStateSet)>();
             Weight currentSegmentStateWeightSum = Weight.Zero;
-            var currentSegmentStateWeights = segmentBounds.Select(b => b.Item2.DestinationStateId).ToDictionary(d => d, d => Weight.Zero);
+
+            var currentSegmentStateWeights = new Dictionary<int, Weight>();
+            foreach (var sb in segmentBounds)
+            {
+                currentSegmentStateWeights[sb.Item2.DestinationStateId] = Weight.Zero;
+            }
+
             var activeSegments = new HashSet<TransitionCharSegmentBound>();
             int currentSegmentStart = char.MinValue;
             foreach (var tup in sortedIndexedSegmentBounds)
@@ -137,9 +143,10 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         private static void AddTransitionCharSegmentBounds(
             Transition transition, Weight sourceStateResidualWeight, List<Tuple<int, TransitionCharSegmentBound>> bounds)
         {
-            var probs = (PiecewiseVector)transition.ElementDistribution.Value.GetProbs();
+            var distribution = transition.ElementDistribution.Value;
+            var ranges = distribution.Ranges;
             int commonValueStart = char.MinValue;
-            Weight commonValue = Weight.FromValue(probs.CommonValue);
+            Weight commonValue = Weight.FromValue(distribution.ProbabilityOutsideRanges);
             Weight weightBase = Weight.Product(transition.Weight, sourceStateResidualWeight);
             TransitionCharSegmentBound newSegmentBound;
 
@@ -148,34 +155,33 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             ////    Console.WriteLine("Weight base infinity");
             ////}
 
-            for (int i = 0; i < probs.Pieces.Count; ++i)
+            foreach (var range in ranges)
             {
-                ConstantVector piece = probs.Pieces[i];
-                if (piece.Start > commonValueStart && !commonValue.IsZero)
+                if (range.StartInclusive > commonValueStart && !commonValue.IsZero)
                 {
                     // Add endpoints for the common value
                     Weight segmentWeight = Weight.Product(commonValue, weightBase);
                     newSegmentBound = new TransitionCharSegmentBound(commonValueStart, transition.DestinationStateIndex, segmentWeight, true);
                     bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
-                    newSegmentBound = new TransitionCharSegmentBound(piece.Start, transition.DestinationStateIndex, segmentWeight, false);
+                    newSegmentBound = new TransitionCharSegmentBound(range.StartInclusive, transition.DestinationStateIndex, segmentWeight, false);
                     bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
                 }
 
                 // Add segment endpoints
-                Weight pieceValue = Weight.FromValue(piece.Value);
+                Weight pieceValue = Weight.FromValue(range.Probability);
                 if (!pieceValue.IsZero)
                 {
                     Weight segmentWeight = Weight.Product(pieceValue, weightBase);
-                    newSegmentBound = new TransitionCharSegmentBound(piece.Start, transition.DestinationStateIndex, segmentWeight, true);
+                    newSegmentBound = new TransitionCharSegmentBound(range.StartInclusive, transition.DestinationStateIndex, segmentWeight, true);
                     bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count, newSegmentBound));
-                    newSegmentBound = new TransitionCharSegmentBound(piece.End + 1, transition.DestinationStateIndex, segmentWeight, false);
+                    newSegmentBound = new TransitionCharSegmentBound(range.EndExclusive, transition.DestinationStateIndex, segmentWeight, false);
                     bounds.Add(new Tuple<int, TransitionCharSegmentBound>(bounds.Count,newSegmentBound));    
                 }
-                
-                commonValueStart = piece.End + 1;
+
+                commonValueStart = range.EndExclusive;
             }
 
-            if (!commonValue.IsZero && (probs.Pieces.Count == 0 || probs.Pieces[probs.Pieces.Count - 1].End != char.MaxValue))
+            if (!commonValue.IsZero && (ranges.Count == 0 || ranges[ranges.Count - 1].EndExclusive != DiscreteChar.CharRangeEndExclusive))
             {
                 // Add endpoints for the last common value segment
                 Weight segmentWeight = Weight.Product(commonValue, weightBase);

@@ -76,14 +76,14 @@ namespace Microsoft.ML.Probabilistic.Distributions
         public const string LetterCharacterRanges = OnlyUpperCaseCharacterRanges + OnlyLowerCaseCharacterRanges + MixedCaseCharacterRanges;
 
         /// <summary>
+        /// The (exclusive) end of the character range.
+        /// </summary>
+        public const int CharRangeEndExclusive = char.MaxValue + 1;
+
+        /// <summary>
         /// The tolerance value for probability comparisons.
         /// </summary>
         private const double Eps = 1e-15;
-
-        /// <summary>
-        /// The (exclusive) end of the character range.
-        /// </summary>
-        private const int CharRangeEndExclusive = char.MaxValue + 1;
 
         /// <summary>
         /// The probability of a character under a uniform distribution over characters.
