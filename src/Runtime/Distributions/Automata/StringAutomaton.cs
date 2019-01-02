@@ -65,7 +65,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             // Produce an outgoing transition for each unique subset of overlapping segments
             var result = new List<(DiscreteChar, Weight, Determinization.WeightedStateSet)>();
             Weight currentSegmentStateWeightSum = Weight.Zero;
-            var currentSegmentStateWeights = segmentBounds.Select(b => b.Item2.DestinationStateId).Distinct().ToDictionary(d => d, d => Weight.Zero);
+            var currentSegmentStateWeights = segmentBounds.Select(b => b.Item2.DestinationStateId).ToDictionary(d => d, d => Weight.Zero);
             var activeSegments = new HashSet<TransitionCharSegmentBound>();
             int currentSegmentStart = char.MinValue;
             foreach (var tup in sortedIndexedSegmentBounds)
