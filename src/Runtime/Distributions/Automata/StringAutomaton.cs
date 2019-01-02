@@ -42,7 +42,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// The first two elements of a tuple define the element distribution and the weight of a transition.
         /// The third element defines the outgoing state.
         /// </returns>
-        protected override IEnumerable<Tuple<DiscreteChar, Weight, Determinization.WeightedStateSet>> GetOutgoingTransitionsForDeterminization(
+        protected override List<(DiscreteChar, Weight, Determinization.WeightedStateSet)> GetOutgoingTransitionsForDeterminization(
             Determinization.WeightedStateSet sourceState)
         {
             const double LogEps = -35; // Don't add transitions with log-weight less than this as they have been produced by numerical inaccuracies
@@ -63,7 +63,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             var sortedIndexedSegmentBounds = segmentBounds.OrderBy(tup => tup.Item2);
 
             // Produce an outgoing transition for each unique subset of overlapping segments
-            var result = new List<Tuple<DiscreteChar, Weight, Determinization.WeightedStateSet>>();
+            var result = new List<(DiscreteChar, Weight, Determinization.WeightedStateSet)>();
             Weight currentSegmentStateWeightSum = Weight.Zero;
             var currentSegmentStateWeights = segmentBounds.Select(b => b.Item2.DestinationStateId).Distinct().ToDictionary(d => d, d => Weight.Zero);
             var activeSegments = new HashSet<TransitionCharSegmentBound>();
@@ -90,7 +90,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                     }
 
                     Weight transitionWeight = Weight.Product(Weight.FromValue(segmentLength), currentSegmentStateWeightSum);
-                    result.Add(Tuple.Create(elementDist, transitionWeight, destinationState));
+                    result.Add((elementDist, transitionWeight, destinationState));
                 }
 
                 // Update current segment
