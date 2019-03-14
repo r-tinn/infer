@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics;
+
 namespace Microsoft.ML.Probabilistic.Collections
 {
     using System;
@@ -95,7 +97,7 @@ namespace Microsoft.ML.Probabilistic.Collections
         /// <summary>
         /// Index of the first element which does not belong to this segment.
         /// </summary>
-        private readonly int end;
+        private readonly int count;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ReadOnlyArraySegment{T}"/> structure.
@@ -108,14 +110,21 @@ namespace Microsoft.ML.Probabilistic.Collections
 
             this.array = array;
             this.begin = begin;
-            this.end = end;
+            this.count = end - begin;
         }
 
         /// <inheritdoc/>
-        public T this[int index] => this.array[this.begin + index];
+        public T this[int index]
+        {
+            get
+            {
+                Debug.Assert(index >= 0 && index < this.count);
+                return this.array[this.begin + index];
+            }
+        }
 
         /// <inheritdoc/>
-        public int Count => this.end - this.begin;
+        public int Count => this.count;
 
         /// <summary>
         /// Returns enumerator over elements of array.
@@ -124,15 +133,15 @@ namespace Microsoft.ML.Probabilistic.Collections
         /// This is value-type non-virtual version of enumerator that is used by compiler in foreach loops.
         /// </remarks>
         public ReadOnlyArraySegmentEnumerator<T> GetEnumerator() =>
-            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.end);
+            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.begin + this.count);
 
         /// <inheritdoc/>
         IEnumerator<T> IEnumerable<T>.GetEnumerator() =>
-            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.end);
+            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.begin + this.count);
 
         /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() =>
-            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.end);
+            new ReadOnlyArraySegmentEnumerator<T>(this.array, this.begin, this.begin + this.count);
     }
 
     /// <summary>

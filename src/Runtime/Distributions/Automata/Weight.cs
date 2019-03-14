@@ -21,7 +21,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
     /// </remarks>
     [Serializable]
     [DataContract]
-    public struct Weight
+    public struct Weight : IComparable<Weight>
     {
         /// <summary>
         /// The logarithm of the weight value.
@@ -73,7 +73,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <summary>
         /// Gets value indicating whether weight is infinite.
         /// </summary>
-        public bool IsInfinity => double.IsInfinity(Value);
+        public bool IsInfinity => double.IsPositiveInfinity(Value);
 
         /// <summary>
         /// Creates a weight from the logarithm of its value.
@@ -189,6 +189,8 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             return new Weight(-weight.LogValue);
         }
 
+        public static Weight Pow(Weight weight, double power) => new Weight(weight.LogValue * power);
+
         /// <summary>
         /// Computes the sum of a geometric series <c>1 + w + w^2 + w^3 + ...</c>,
         /// where <c>w</c> is a given weight.
@@ -245,10 +247,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <see langword="true"/> if the given weights are equal,
         /// <see langword="false"/> otherwise.
         /// </returns>
-        public static bool operator ==(Weight weight1, Weight weight2)
-        {
-            return weight1.logValue == weight2.logValue;
-        }
+        public static bool operator ==(Weight weight1, Weight weight2) => weight1.logValue == weight2.logValue;
 
         /// <summary>
         /// The weight inequality operator.
@@ -259,10 +258,16 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <see langword="true"/> if the given weights are not equal,
         /// <see langword="false"/> otherwise.
         /// </returns>
-        public static bool operator !=(Weight weight1, Weight weight2)
-        {
-            return !(weight1 == weight2);
-        }
+        public static bool operator !=(Weight weight1, Weight weight2) => !(weight1 == weight2);
+
+        public static bool operator >(Weight weight1, Weight weight2) => weight1.logValue > weight2.LogValue;
+
+        public static bool operator >=(Weight weight1, Weight weight2) => weight1.logValue >= weight2.LogValue;
+
+        public static bool operator <(Weight weight1, Weight weight2) => weight1.logValue < weight2.LogValue;
+
+        public static bool operator <=(Weight weight1, Weight weight2) => weight1.logValue <= weight2.LogValue;
+
 
         /// <summary>
         /// Compute the product of given weights.
@@ -325,6 +330,8 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         {
             return this.Value.ToString(provider);
         }
+
+        public int CompareTo(Weight that) => this.LogValue.CompareTo(that.LogValue);
 
 
         /// <summary>
