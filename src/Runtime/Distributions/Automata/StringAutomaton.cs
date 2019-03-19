@@ -27,27 +27,28 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <summary>
         /// Computes a set of outgoing transitions from a given state of the determinization result.
         /// </summary>
-        /// <param name="sourceState">The source state of the determinized automaton represented as 
+        /// <param name="sourceStateSet">The source state of the determinized automaton represented as 
         /// a set of (stateId, weight) pairs, where state ids correspond to states of the original automaton.</param>
         /// <returns>
-        /// A collection of (element distribution, weight, weighted state set) triples corresponding to outgoing transitions from <paramref name="sourceState"/>.
+        /// A collection of (element distribution, weight, weighted state set) triples corresponding to outgoing
+        /// transitions from <paramref name="sourceStateSet"/>.
         /// The first two elements of a tuple define the element distribution and the weight of a transition.
         /// The third element defines the outgoing state.
         /// </returns>
         protected override List<(DiscreteChar, Weight, Determinization.WeightedStateSet)> GetOutgoingTransitionsForDeterminization(
-            Determinization.WeightedStateSet sourceState)
-        {
+            Determinization.WeightedStateSet sourceStateSet)
+        {   
             const double LogEps = -35; // TODO: remove
             // Build a list of numbered non-zero probability character segment bounds (they are numbered here due to perf. reasons)
             var segmentBounds = new List<(int Index, TransitionCharSegmentBound Data)>();
             var transitionsProcessed = 0;
-            foreach (var stateIdWeight in sourceState)
+            for (var i = 0; i < sourceStateSet.Count; ++i)
             {
-
-                var state = this.States[stateIdWeight.Index];
+                var sourceState = sourceStateSet[i];
+                var state = this.States[sourceState.Index];
                 foreach (var transition in state.Transitions)
                 {
-                    AddTransitionCharSegmentBounds(transition, stateIdWeight.Weight, segmentBounds);
+                    AddTransitionCharSegmentBounds(transition, sourceState.Weight, segmentBounds);
                 }
 
                 transitionsProcessed += state.Transitions.Count;

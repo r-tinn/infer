@@ -54,11 +54,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             var weightedStateSetToNewState = new Dictionary<Determinization.WeightedStateSet, int>();
             var builder = new Builder();
 
-            var startWeightedStateSet = new Determinization.WeightedStateSet(
-                new[]
-                {
-                    new Determinization.WeightedState(this.Start.Index, Weight.One)
-                });
+            var startWeightedStateSet = new Determinization.WeightedStateSet(this.Start.Index);
             weightedStateSetQueue.Enqueue(startWeightedStateSet);
             weightedStateSetToNewState.Add(startWeightedStateSet, builder.StartStateIndex);
             builder.Start.SetEndWeight(this.Start.EndWeight);
@@ -70,40 +66,38 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 var currentStateIndex = weightedStateSetToNewState[currentWeightedStateSet];
                 var currentState = builder[currentStateIndex];
 
-                // Find out what transitions we should add for this state
-                var outgoingTransitionInfos = this.GetOutgoingTransitionsForDeterminization(currentWeightedStateSet);
-
-                // For each transition to add
-                foreach (var outgoingTransitionInfo in outgoingTransitionInfos)
+                // Common special-case: determenistic tansitions from single state.
+                // In this case no complicated determinization procedure is needed.
+                if (currentWeightedStateSet.Count == 1 &&
+                    AllDestinationsAreSame(currentWeightedStateSet[0].Index))
                 {
-                    var (elementDistribution, weight, destWeightedStateSet) = outgoingTransitionInfo;
+                    Debug.Assert(currentWeightedStateSet[0].Weight == Weight.One);
 
-                    if (!weightedStateSetToNewState.TryGetValue(destWeightedStateSet, out var destinationStateIndex))
+                    var sourceState = this.States[currentWeightedStateSet[0].Index];
+                    foreach (var transition in sourceState.Transitions)
                     {
-                        if (builder.StatesCount == maxStatesBeforeStop)
+                        var destinationStates =
+                            new Determinization.WeightedStateSet(transition.DestinationStateIndex);
+                        var outgoingTransitionInfo =
+                            (transition.ElementDistribution.Value, transition.Weight, destinationStates);
+                        if (!TryAddTransition(outgoingTransitionInfo, currentState))
                         {
-                            // Too many states, determinization attempt failed
                             return false;
                         }
-
-                        // Add new state to the result
-                        var destinationState = builder.AddState();
-                        weightedStateSetToNewState.Add(destWeightedStateSet, destinationState.Index);
-                        weightedStateSetQueue.Enqueue(destWeightedStateSet);
-
-                        // Compute its ending weight
-                        destinationState.SetEndWeight(Weight.Zero);
-                        foreach (var weightedState in destWeightedStateSet)
-                        {
-                            var addedWeight = weightedState.Weight * this.States[weightedState.Index].EndWeight;
-                            destinationState.SetEndWeight(destinationState.EndWeight + addedWeight);
-                        }
-
-                        destinationStateIndex = destinationState.Index;
                     }
-
-                    // Add transition to the destination state
-                    currentState.AddTransition(elementDistribution, weight, destinationStateIndex);
+                }
+                else
+                {
+                    // Find out what transitions we should add for this state
+                    var outgoingTransitionInfos =
+                        this.GetOutgoingTransitionsForDeterminization(currentWeightedStateSet);
+                    foreach (var outgoingTransitionInfo in outgoingTransitionInfos)
+                    {
+                        if (!TryAddTransition(outgoingTransitionInfo, currentState))
+                        {
+                            return false;
+                        }
+                    }
                 }
             }
 
@@ -115,6 +109,62 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             this.LogValueOverride = this.LogValueOverride;
 
             return true;
+
+            bool AllDestinationsAreSame(int stateIndex)
+            {
+                var transitions = this.States[stateIndex].Transitions;
+                if (transitions.Count <= 1)
+                {
+                    return true;
+                }
+
+                var destination = transitions[0].DestinationStateIndex;
+                for (var i = 1; i < transitions.Count; ++i)
+                {
+                    if (transitions[i].DestinationStateIndex != destination)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            bool TryAddTransition(
+                (TElementDistribution, Weight, Determinization.WeightedStateSet) outgoingTransitionInfo,
+                Builder.StateBuilder currentState)
+            {
+                var (elementDistribution, weight, destWeightedStateSet) = outgoingTransitionInfo;
+
+                if (!weightedStateSetToNewState.TryGetValue(destWeightedStateSet, out var destinationStateIndex))
+                {
+                    if (builder.StatesCount == maxStatesBeforeStop)
+                    {
+                        // Too many states, determinization attempt failed
+                        return false;
+                    }
+
+                    // Add new state to the result
+                    var destinationState = builder.AddState();
+                    weightedStateSetToNewState.Add(destWeightedStateSet, destinationState.Index);
+                    weightedStateSetQueue.Enqueue(destWeightedStateSet);
+
+                    // Compute its ending weight
+                    destinationState.SetEndWeight(Weight.Zero);
+                    for (var i = 0; i < destWeightedStateSet.Count; ++i)
+                    {
+                        var weightedState = destWeightedStateSet[i];
+                        var addedWeight = weightedState.Weight * this.States[weightedState.Index].EndWeight;
+                        destinationState.SetEndWeight(destinationState.EndWeight + addedWeight);
+                    }
+
+                    destinationStateIndex = destinationState.Index;
+                }
+
+                // Add transition to the destination state
+                currentState.AddTransition(elementDistribution, weight, destinationStateIndex);
+                return true;
+            }
         }
 
         /// <summary>
@@ -131,7 +181,6 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         protected abstract List<(TElementDistribution, Weight, Determinization.WeightedStateSet)> GetOutgoingTransitionsForDeterminization(
             Determinization.WeightedStateSet sourceState);
 
-        
         /// <summary>
         /// Groups together helper classes used for automata determinization.
         /// </summary>
@@ -168,18 +217,46 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             /// It is essentially a set of (stateId, weight) pairs of the source automaton, where each state id is unique.
             /// Supports a quick lookup of the weight by state id.
             /// </summary>
-            public struct WeightedStateSet : IEnumerable<WeightedState>, IEquatable<WeightedStateSet>
+            public struct WeightedStateSet
             {
                 /// <summary>
                 /// A mapping from state ids to weights.
                 /// </summary>
                 private readonly ReadOnlyArray<WeightedState> weightedStates;
 
-                /// <summary>
-                /// Initializes a new instance of the <see cref="WeightedStateSet"/> class.
-                /// </summary>
-                public WeightedStateSet(ReadOnlyArray<WeightedState> weightedStates) =>
-                    this.weightedStates = weightedStates;
+                private readonly int singleStateIndex;
+
+                public WeightedStateSet(int stateIndex)
+                {
+                    this.weightedStates = null;
+                    this.singleStateIndex = stateIndex;
+                }
+
+                public WeightedStateSet(ReadOnlyArray<WeightedState> weightedStates)
+                {
+                    Debug.Assert(weightedStates.Count > 0);
+                    if (weightedStates.Count == 1)
+                    {
+                        Debug.Assert(weightedStates[0].Weight == Weight.One);
+                        this.weightedStates = null;
+                        this.singleStateIndex = weightedStates[0].Index;
+                    }
+                    else
+                    {
+                        this.weightedStates = weightedStates;
+                        this.singleStateIndex = 0; // <- value doesn't matter, but silences the compiler
+                    }
+                }
+
+                public int Count =>
+                    this.weightedStates.IsNull
+                        ? 1
+                        : this.weightedStates.Count;
+
+                public WeightedState this[int index] =>
+                    this.weightedStates.IsNull
+                        ? new WeightedState(this.singleStateIndex, Weight.One)
+                        : this.weightedStates[index];
 
                 /// <summary>
                 /// Checks whether this object is equal to a given one.
@@ -201,9 +278,16 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 /// </returns>
                 public bool Equals(WeightedStateSet that)
                 {
-                    if (this.weightedStates.Count != that.weightedStates.Count)
+                    if (this.Count != that.Count)
                     {
                         return false;
+                    }
+
+                    // Single-element is treated in custom way for performance reasons
+                    if (this.Count == 1)
+                    {
+                        Debug.Assert(this.weightedStates.IsNull && that.weightedStates.IsNull);
+                        return this.singleStateIndex == that.singleStateIndex;
                     }
 
                     for (var i = 0; i < this.weightedStates.Count; ++i)
@@ -242,28 +326,6 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 /// </summary>
                 /// <returns>A string representation of the instance.</returns>
                 public override string ToString() => string.Join(", ", weightedStates);
-
-                #region IEnumerable implementation
-
-                /// <summary>
-                /// Gets the enumerator.
-                /// </summary>
-                /// <returns>
-                /// The enumerator.
-                /// </returns>
-                public IEnumerator<WeightedState> GetEnumerator() =>
-                    this.weightedStates.GetEnumerator();
-
-                /// <summary>
-                /// Gets the enumerator.
-                /// </summary>
-                /// <returns>
-                /// The enumerator.
-                /// </returns>
-                IEnumerator IEnumerable.GetEnumerator() =>
-                    this.GetEnumerator();
-
-                #endregion
             }
 
             public struct WeightedStateSetBuilder
