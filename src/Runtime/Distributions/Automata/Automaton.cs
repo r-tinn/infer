@@ -1420,6 +1420,12 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             simplification.RemoveDeadStates(); // Product can potentially create dead states
             simplification.SimplifyIfNeeded();
 
+            var bothDeterminized =
+                automaton1.Data.DeterminizationState == DeterminizationState.IsDeterminized &&
+                automaton2.Data.DeterminizationState == DeterminizationState.IsDeterminized;
+            var determinizationState =
+                bothDeterminized ? DeterminizationState.IsDeterminized : DeterminizationState.Unknown;
+
             this.Data = builder.GetData();
             if (this is StringAutomaton && tryDeterminize)
             {
