@@ -90,10 +90,6 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                             var stateWeight = stateIdWithWeight.Value.weightSum * invTotalWeight;
                             destinationStateSetBuilder.Add(stateIdWithWeight.Key, stateWeight);
                         }
-                        else
-                        {
-                            Console.WriteLine("Interesting");
-                        }
                     }
 
                     var (destinationStateSet, destinationStateSetWeight) = destinationStateSetBuilder.Get();
