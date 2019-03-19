@@ -359,7 +359,7 @@ namespace Microsoft.ML.Probabilistic.Tests
                 return result.Select(t => (
                     t.Item1,
                     t.Item2 * weight,
-                    t.Item3.Select(state => (state.Index, state.Weight)).ToArray()));
+                    t.Item3.ToArray().Select(state => (state.Index, state.Weight)).ToArray()));
             }
         }
         #endregion

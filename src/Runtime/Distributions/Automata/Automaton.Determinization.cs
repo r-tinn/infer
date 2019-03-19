@@ -312,6 +312,11 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 /// <remarks>Only state ids</remarks>
                 public override int GetHashCode()
                 {
+                    if (this.weightedStates.IsNull)
+                    {
+                        return this.singleStateIndex.GetHashCode();
+                    }
+
                     var result = this.weightedStates[0].GetHashCode();
                     for (var i = 1; i < this.weightedStates.Count; ++i)
                     {
@@ -326,6 +331,17 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 /// </summary>
                 /// <returns>A string representation of the instance.</returns>
                 public override string ToString() => string.Join(", ", weightedStates);
+
+                public WeightedState[] ToArray()
+                {
+                    var result = new WeightedState[this.Count];
+                    for (var i = 0; i < this.Count; ++i)
+                    {
+                        result[i] = this[i];
+                    }
+
+                    return result;
+                }
             }
 
             public struct WeightedStateSetBuilder

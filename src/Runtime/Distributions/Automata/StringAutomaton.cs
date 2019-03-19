@@ -41,7 +41,6 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             const double LogEps = -35; // TODO: remove
             // Build a list of numbered non-zero probability character segment bounds (they are numbered here due to perf. reasons)
             var segmentBounds = new List<(int Index, TransitionCharSegmentBound Data)>();
-            var transitionsProcessed = 0;
             for (var i = 0; i < sourceStateSet.Count; ++i)
             {
                 var sourceState = sourceStateSet[i];
@@ -50,19 +49,14 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                 {
                     AddTransitionCharSegmentBounds(transition, sourceState.Weight, segmentBounds);
                 }
-
-                transitionsProcessed += state.Transitions.Count;
             }
 
             // Sort segment bounds left-to-right, start-to-end
             var sortedIndexedSegmentBounds = segmentBounds.ToArray();
-            if (transitionsProcessed > 1)
-            {
-                Array.Sort(sortedIndexedSegmentBounds, CompareSegmentBounds);
+            Array.Sort(sortedIndexedSegmentBounds, CompareSegmentBounds);
 
-                int CompareSegmentBounds((int, TransitionCharSegmentBound) a, (int, TransitionCharSegmentBound) b) =>
-                    a.Item2.CompareTo(b.Item2);
-            }
+            int CompareSegmentBounds((int, TransitionCharSegmentBound) a, (int, TransitionCharSegmentBound) b) =>
+                a.Item2.CompareTo(b.Item2);
 
             // Produce an outgoing transition for each unique subset of overlapping segments
             var result = new List<(DiscreteChar, Weight, Determinization.WeightedStateSet)>();
