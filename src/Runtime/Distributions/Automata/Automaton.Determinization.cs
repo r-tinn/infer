@@ -57,7 +57,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             var startWeightedStateSet = new Determinization.WeightedStateSet(
                 new[]
                 {
-                    new Determinization.WeightedState(builder.StartStateIndex, Weight.One)
+                    new Determinization.WeightedState(this.Start.Index, Weight.One)
                 });
             weightedStateSetQueue.Enqueue(startWeightedStateSet);
             weightedStateSetToNewState.Add(startWeightedStateSet, builder.StartStateIndex);
