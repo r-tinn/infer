@@ -1426,7 +1426,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             var determinizationState =
                 bothDeterminized ? DeterminizationState.IsDeterminized : DeterminizationState.Unknown;
 
-            this.Data = builder.GetData();
+            this.Data = builder.GetData(determinizationState);
             if (this is StringAutomaton && tryDeterminize)
             {
                 this.TryDeterminize();
