@@ -1131,7 +1131,7 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             }
 
             var determinizedAutomaton = automaton.Clone();
-            if (!determinizedAutomaton.TryDeterminize())
+            if (!determinizedAutomaton.TryDeterminize(false))
             {
                 return false;
             }

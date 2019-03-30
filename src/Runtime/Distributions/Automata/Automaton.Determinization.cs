@@ -30,14 +30,14 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
         /// <see langword="false"/> otherwise.
         /// </returns>
         /// <remarks>See <a href="http://www.cs.nyu.edu/~mohri/pub/hwa.pdf"/> for algorithm details.</remarks>
-        public bool TryDeterminize()
+        public bool TryDeterminize(bool weighted = true)
         {
             if (this.Data.DeterminizationState != DeterminizationState.Unknown)
             {
                 return this.Data.DeterminizationState == DeterminizationState.IsDeterminized;
             }
 
-            int maxStatesBeforeStop = Math.Min(this.States.Count * 3, MaxStateCount);
+            int maxStatesBeforeStop = Math.Min(this.States.Count * 10, MaxStateCount);
 
             this.MakeEpsilonFree(); // Deterministic automata cannot have epsilon-transitions
 
@@ -191,6 +191,12 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
             {
                 var (elementDistribution, weight, destWeightedStateSet) = outgoingTransitionInfo;
 
+                // hack-hack
+                if (!weighted)
+                {
+                    destWeightedStateSet = destWeightedStateSet.RemoveWeights();
+                }
+
                 if (!weightedStateSetToNewState.TryGetValue(destWeightedStateSet, out var destinationStateIndex))
                 {
                     if (builder.StatesCount == maxStatesBeforeStop)
@@ -332,6 +338,17 @@ namespace Microsoft.ML.Probabilistic.Distributions.Automata
                     this.weightedStates.IsNull
                         ? new WeightedState(this.singleStateIndex, Weight.One)
                         : this.weightedStates[index];
+
+                public WeightedStateSet RemoveWeights()
+                {
+                    var newWeights = new WeightedState[this.Count];
+                    for (var i = 0; i < Count; ++i)
+                    {
+                        newWeights[i] = new WeightedState(this[i].Index, Weight.One);
+                    }
+
+                    return new WeightedStateSet(newWeights);
+                }
 
                 /// <summary>
                 /// Checks whether this object is equal to a given one.
