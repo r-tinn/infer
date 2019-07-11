@@ -815,6 +815,7 @@ namespace Microsoft.ML.Probabilistic.Factors
         /// <typeparam name="DistributionType">The type of a distribution over array elements.</typeparam>
         /// <typeparam name="ItemType">The type of a sub-array.</typeparam>
         [SkipIfAllUniform("array", "items")]
+        [Fresh]
         public static ArrayType MarginalAverageConditional<ArrayType, DistributionType, ItemType>(
             ArrayType array, [NoInit] IList<ItemType> items, IList<IList<int>> indices, ArrayType result)
             where ArrayType : IList<DistributionType>, SettableTo<ArrayType>
@@ -846,6 +847,7 @@ namespace Microsoft.ML.Probabilistic.Factors
         /// <typeparam name="ItemArrayType">The type of an incoming message from <c>items</c>.</typeparam>
         /// <typeparam name="ItemType">The type of a sub-array.</typeparam>
         [SkipIfAllUniform("array", "items")]
+        [Fresh]
         public static ArrayType MarginalAverageConditional<ArrayType, DistributionType, ItemArrayType, ItemType>(
             ArrayType array, [NoInit] IList<ItemType> items, IList<IList<int>> indices, ArrayType result)
             where ArrayType : IList<DistributionType>, SettableTo<ArrayType>
