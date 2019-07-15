@@ -302,7 +302,7 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
                 }
             }
             List<NodeIndex> initSchedule;
-            List<NodeIndex> schedule = Schedule(g, inputStmts, offsetVarsToDelete, out initSchedule, groupOf2);
+            List<NodeIndex> schedule = Schedule(g, inputStmts, offsetVarsToDelete, out initSchedule, out bool isCyclic, groupOf2);
             if (schedule == null)
             {
                 schedule = new List<NodeIndex>(new Range(0, inputStmts.Count));
@@ -364,10 +364,10 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
 
             CheckSchedule(g, experimental, initSchedule, schedule);
             LastScheduleLength = schedule.Count;
-            return true;
+            return isCyclic;
         }
 
-        private List<int> Schedule(DependencyGraph g, IReadOnlyList<IStatement> inputStmts, ICollection<IVariableDeclaration> offsetVarsToDelete, out List<int> initSchedule, int[] groupOf2)
+        private List<int> Schedule(DependencyGraph g, IReadOnlyList<IStatement> inputStmts, ICollection<IVariableDeclaration> offsetVarsToDelete, out List<int> initSchedule, out bool isCyclic, int[] groupOf2)
         {
             if (true)
             {
@@ -412,6 +412,7 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
 #endif
                 // The dependency graph is cyclic even after deleting offset edges.  Fall through and schedule everything as a unit.
             }
+            isCyclic = true;
             var scheduler = new Scheduler();
             scheduler.debug = debug;
             scheduler.doRepair = compiler.EnforceTriggers;
@@ -670,7 +671,7 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
                 }
                 else
                 {
-                    List<NodeIndex> schedule2 = Schedule(g, inputStmts, offsetVarsToDelete, out List<NodeIndex> initSchedule2, null);
+                    List<NodeIndex> schedule2 = Schedule(g, inputStmts, offsetVarsToDelete, out List<NodeIndex> initSchedule2, out bool isCyclic2, null);
                     if (initSchedule2.Count > 0)
                     {
                         initScheduleLocal.AddRange(pendingOutput);
