@@ -680,8 +680,6 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
             sccBack.EndComponent += delegate ()
             {
                 // check that the block has some offset edges on loopVar
-                if (currentBlock.Count == 1)
-                    return;
                 bool isForwardLoop = !loopVarsToReverse.Contains(loopVar);
                 bool hasOffsetEdge = BlockHasOffsetEdge(g, info, currentBlock, isForwardLoop);
                 if (!hasOffsetEdge)

@@ -81,6 +81,7 @@ namespace TestApp
             Stopwatch watch = new Stopwatch();
             watch.Start();
 
+            //new VmpTests().GammaSumTest();
             new SerialTests().MaxArrayTest();
 
             if (false)

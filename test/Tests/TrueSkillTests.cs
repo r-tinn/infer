@@ -25,8 +25,7 @@ namespace Microsoft.ML.Probabilistic.Tests
     public class TrueSkillTests
     {
         [Fact]
-        [Trait("Category", "OpenBug")]
-        public void TrueSkillTest()
+        public void RaterDrawMarginPrecisionAndThresholdsModel()
         {
             const double SkillMean = 25.0;
             const double SkillPrecision = 1;

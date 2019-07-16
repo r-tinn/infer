@@ -163,7 +163,7 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
                 context.InputAttributes.CopyObjectAttributesTo(iws, context.OutputAttributes, ws);
                 context.OutputAttributes.Set(ws, new InitializerSet(backEdgeSources));
                 // we still surround the body with a while(true) even if it is not cyclic, in order to ensure that the statements do not get separated later
-                if (!isCyclic && compiler.UseSerialSchedules)
+                if (backEdgeSources.Count == 0 && compiler.UseSerialSchedules)
                     context.OutputAttributes.Set(ws, new HasOffsetIndices());
             }
             if (whileDepth == 0)
@@ -265,11 +265,7 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
                 if (doNotSchedule)
                 {
                     AddConvertedStatements(outputLoop, inputStmts, new Range(0, inputStmts.Count), firstIterPostBlock);
-                    var usedNodes2 = DeadCodeTransform.CollectUses(g.dependencyGraph, g.dependencyGraph.Nodes);
-                    foreach (var usedNode in usedNodes2)
-                    {
-                        backEdgeSources.Add(flatStmts[usedNode]);
-                    }
+                    ForEachBackEdgeSource(g, g.dependencyGraph.Nodes, usedNode => backEdgeSources.Add(flatStmts[usedNode]));
                     return true;
                 }
                 inputStmts = flatStmts;
@@ -356,15 +352,20 @@ namespace Microsoft.ML.Probabilistic.Compiler.Transforms
             AddConvertedStatements(outputLoop, inputStmts, schedule, firstIterPostBlock, true, compiler.AllowSerialInitialisers, groupOf2);
             this.ForceInitializedNodes = wasForceInitializedNodes;
 
-            var usedNodes = DeadCodeTransform.CollectUses(g.dependencyGraph, schedule);
-            foreach (var usedNode in usedNodes)
-            {
-                backEdgeSources.Add(inputStmts[usedNode]);
-            }
+            ForEachBackEdgeSource(g, schedule, usedNode => backEdgeSources.Add(inputStmts[usedNode]));
 
             CheckSchedule(g, experimental, initSchedule, schedule);
             LastScheduleLength = schedule.Count;
             return isCyclic;
+        }
+
+        private void ForEachBackEdgeSource(DependencyGraph g, IEnumerable<NodeIndex> schedule, Action<NodeIndex> action)
+        {
+            var usedNodes = DeadCodeTransform.CollectUses(g.dependencyGraph, schedule, e => g.isDeleted[e]);
+            foreach (var usedNode in usedNodes)
+            {
+                action(usedNode);
+            }
         }
 
         private List<int> Schedule(DependencyGraph g, IReadOnlyList<IStatement> inputStmts, ICollection<IVariableDeclaration> offsetVarsToDelete, out List<int> initSchedule, out bool isCyclic, int[] groupOf2)
