@@ -38,7 +38,7 @@ namespace Microsoft.ML.Probabilistic.Tests
             //Scheduling2Transform.showGraphs = true;
             //Scheduling2Transform.showAncestors = true;
             //DependencyGraph.debug = true;
-            SchedulingTransform.debug = true;
+            //SchedulingTransform.debug = true;
             //Scheduling2Transform.showCapacityBreakdown = true;
             //Scheduling2Transform.showMinCut = true;
             //Scheduling2Transform.useMinCut = false;
