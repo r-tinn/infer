@@ -35,7 +35,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             //Tutorials
             //Uncomment one of these lines to run a particular tutorial in console application
 
-            new FirstExample().Run();
+            //new FirstExample().Run();
             //new TruncatedGaussian().Run();
             //new TruncatedGaussianEfficient().Run();
             //new LearningAGaussian().Run();
@@ -56,7 +56,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             //new ChessAnalysis().Run();
             //new ClickModel().Run();
             //new DifficultyAbility().Run();
-            //new GaussianProcessClassifier().Run();
+            new GaussianProcessClassifier().Run();
             //new MultinomialRegression().Run();
             //new RecommenderSystem().Run();
             //new StudentSkills().Run();
