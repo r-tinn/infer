@@ -36,7 +36,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
 
             Vector[] inputs = new Vector[]
             {
-                Vector.FromArray(new double[1] { 1 }),
+                Vector.FromArray(new double[1] { 0 }),
                 Vector.FromArray(new double[1] { 2 }),
                 Vector.FromArray(new double[1] { 3 }),
                 Vector.FromArray(new double[1] { 3 }),
@@ -51,7 +51,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             //bool[] outputs = { true, true, false, true, false, false };
             //double[] outputs = { 0.7, 0.8, 0.2, 0.6, 0.4, 0.3 };
             //double[] outputs = { 0.1, 6.6, 4.4, 13.2, 39.9, 11.8, 38.1, 12.6, 20.9, 40.3 };
-            double[] outputs = { 0.7, 0.8, 0.2, 0.6, 0.4, 0.3, 0.2, 0.6, 0.4, 0.3 };
+            double[] outputs = { -0.85, -0.55, -0.65, -0.25, 0.96, -0.32, 0.88, -0.28, 0.096, 0.98 };
 
             // Open an evidence block to allow model scoring.
             // All modelling code must be inside the IF block.
@@ -72,13 +72,14 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             // The observation model
             VariableArray<double> y = Variable.Observed(outputs, j).Named("y");
             Variable<double> score = Variable.FunctionEvaluate(f, x[j]);
-            VariableArray<double> noisyScore = Variable.Observed(outputs, j).Named("noisyScore");
-            using (Variable.ForEach(j))
-            {
-                var precision = Variable.GammaFromShapeAndRate(10, 2).Named("precision");
-                noisyScore[j] = Variable.GaussianFromMeanAndPrecision(score, precision);
-            }
-            y[j] = Variable.GaussianFromMeanAndVariance(noisyScore[j], 0.1);
+            y[j] = Variable.GaussianFromMeanAndVariance(score, 0.1);
+            //VariableArray<double> noisyScore = Variable.Observed(outputs, j).Named("noisyScore");
+            //using (Variable.ForEach(j))
+            //{
+            //    var precision = Variable.GammaFromShapeAndRate(10, 2).Named("precision");
+            //    noisyScore[j] = Variable.GaussianFromMeanAndPrecision(score, precision);
+            //}
+            //y[j] = Variable.GaussianFromMeanAndVariance(noisyScore[j], 0.1);
 
             // Close the evidence block
             block.CloseBlock();
@@ -93,11 +94,17 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             //};
             Vector[] basis = new Vector[]
             {
-                Vector.FromArray(new double[1] { 0.2 }),
-                Vector.FromArray(new double[1] { 0.2 }),
-                Vector.FromArray(new double[1] { 0.8 }),
-                Vector.FromArray(new double[1] { 0.8 })
-               };
+                Vector.FromArray(new double[1] { 0 }),
+                Vector.FromArray(new double[1] { 2 }),
+                Vector.FromArray(new double[1] { 3 }),
+                Vector.FromArray(new double[1] { 4 }),
+                Vector.FromArray(new double[1] { 5 })
+            };
+
+            //Vector.FromArray(new double[1] { 0.2 }),
+            //    Vector.FromArray(new double[1] { 0.1 }),
+            //    Vector.FromArray(new double[1] { 0.8 }),
+            //    Vector.FromArray(new double[1] { 0.4 })
 
             for (int trial = 0; trial < 1; trial++)
             {
@@ -105,7 +112,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
                 IKernelFunction kf;
                 if (trial == 0)
                 {
-                    kf = new SquaredExponential(-0.5);
+                    kf = new SquaredExponential(1);
                 }
                 else if (trial == 1)
                 {
@@ -119,6 +126,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
                 // Fill in the sparse GP prior
                 GaussianProcess gp = new GaussianProcess(new ConstantFunction(0), kf);
                 prior.ObservedValue = new SparseGP(new SparseGPFixed(gp, basis));
+                // non sparse gp?
 
                 // Model score
                 // compile the inference algorithm

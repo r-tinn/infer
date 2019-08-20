@@ -29,7 +29,7 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             InferenceEngine.DefaultEngine.ShowProgress = true;
             InferenceEngine.DefaultEngine.ShowTimings = false;
             InferenceEngine.DefaultEngine.ShowMsl = false;
-            InferenceEngine.DefaultEngine.ShowFactorGraph = false;
+            InferenceEngine.DefaultEngine.ShowFactorGraph = true;
             InferenceEngine.DefaultEngine.ShowSchedule = false;
 
             //Tutorials
@@ -56,7 +56,8 @@ namespace Microsoft.ML.Probabilistic.Tutorials
             //new ChessAnalysis().Run();
             //new ClickModel().Run();
             //new DifficultyAbility().Run();
-            new GaussianProcessClassifier().Run();
+            //new GaussianProcessClassifier().Run();
+            new GPRegression().Run();
             //new MultinomialRegression().Run();
             //new RecommenderSystem().Run();
             //new StudentSkills().Run();
